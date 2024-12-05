@@ -3,8 +3,32 @@
 {% block content %}
 <div class="max-w-2xl mx-auto">
     <div class="bg-white rounded-lg shadow-lg p-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">Adriano's Document Processor</h1>
-        <h4 class="text-2xl font-bold text-gray-800 mb-2">Testing</h4>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-3">
+            <svg id="featherIcon" class="w-0 h-0 feather-entrance" viewBox="0 0 32 32">
+                <!-- Feather quill -->
+                <path 
+                    d="M6 26L22 4c0 0 2-2 4 0c2 2 0 4 0 4L10 24L6 26Z" 
+                    fill="#4F46E5" 
+                    stroke="#312E81" 
+                    stroke-width="0.75"
+                />
+                <!-- Feather details -->
+                <path 
+                    d="M20 6L8 24M18 8L10 22M16 10L12 20" 
+                    stroke="#312E81" 
+                    stroke-width="0.5"
+                    stroke-linecap="round"
+                />
+                <!-- Pen tip -->
+                <path 
+                    d="M6 26l-2 2l2-2z" 
+                    fill="#312E81" 
+                    stroke="#312E81" 
+                    stroke-width="0.75"
+                />
+            </svg>
+            Scriberr
+        </h1>
         <p class="text-gray-600 mb-8">Upload your document to remove timestamps and format the text.</p>
         
         <form id="uploadForm" method="POST" enctype="multipart/form-data" class="space-y-6">
@@ -54,6 +78,8 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const feather = document.getElementById('featherIcon');
+    feather.style.opacity = '1';
     const form = document.getElementById('uploadForm');
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('document');
