@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Adriano's Document Processor</h1>
+        <h4 class="text-2xl font-bold text-gray-800 mb-2">Testing</h4>
+        <p class="text-gray-600 mb-8">Upload your document to remove timestamps and format the text.</p>
+        
+        <form id="uploadForm" method="POST" enctype="multipart/form-data" class="space-y-6">
+            {{ form.hidden_tag() }}
+            
+            <div class="upload-area p-8 rounded-lg text-center" id="dropZone">
+                <div class="space-y-4">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    
+                    <div class="flex flex-col items-center">
+                        <label for="document" class="cursor-pointer">
+                            <span class="mt-2 block text-sm font-medium text-gray-900">
+                                Drop your file here, or
+                                <span class="text-indigo-600 hover:text-indigo-500">browse</span>
+                            </span>
+                        </label>
+                        {{ form.document(class="hidden", id="document") }}
+                    </div>
+                </div>
+            </div>
+
+            <div id="fileInfo" class="hidden">
+                <p class="text-sm text-gray-500">Selected file: <span id="fileName"></span></p>
+            </div>
+            
+            <!-- Progress bar (hidden by default) -->
+            <div id="progressContainer" class="hidden">
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="progressBar" class="progress-bar bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+                <p id="progressText" class="text-sm text-gray-500 mt-2">Processing...</p>
+            </div>
+
+            <!-- Success message (hidden by default) -->
+            <div id="successMessage" class="hidden p-4 bg-green-100 text-green-700 rounded-lg">
+                Done! Your file can be viewed in your downloads folder.
+            </div>
+
+            {{ form.submit(class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors", value="Process Document") }}
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('uploadForm');
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('document');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const successMessage = document.getElementById('successMessage');
+
+    // Handle drag and drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight(e) {
+        dropZone.classList.add('bg-indigo-50');
+    }
+
+    function unhighlight(e) {
+        dropZone.classList.remove('bg-indigo-50');
+    }
+
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        fileInput.files = files;
+        updateFileInfo();
+    }
+
+    fileInput.addEventListener('change', updateFileInfo);
+
+    function updateFileInfo() {
+        if (fileInput.files.length > 0) {
+            fileInfo.classList.remove('hidden');
+            fileName.textContent = fileInput.files[0].name;
+        } else {
+            fileInfo.classList.add('hidden');
+        }
+    }
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        progressContainer.classList.remove('hidden');
+        
+        try {
+            // Simulate progress (since the actual process is quick)
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 2;
+                if (progress <= 100) {
+                    progressBar.style.width = `${progress}%`;
+                    progressText.textContent = `Processing... ${progress}%`;
+                }
+            }, 50);
+
+            const response = await axios.post('/', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                },
+                responseType: 'blob'
+            });
+
+            clearInterval(progressInterval);
+            progressBar.style.width = '100%';
+            progressText.textContent = 'Processing complete!';
+
+            // Create and trigger download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'processed_document.txt');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            // Show success message
+            successMessage.classList.remove('hidden');
+            
+        } catch (error) {
+            console.error('Error:', error);
+            progressText.textContent = 'Error processing file';
+            progressBar.classList.remove('bg-indigo-600');
+            progressBar.classList.add('bg-red-600');
+        }
+    });
+});
+</script>
+{% endblock %}
